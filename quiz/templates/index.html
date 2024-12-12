@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Quiz App</title>
+    <script>
+        async function startSession() {
+            await fetch('/api/start/');
+            document.getElementById('status').textContent = "Session started.";
+        }
+
+        async function fetchQuestion() {
+            const res = await fetch('/api/question/');
+            const question = await res.json();
+            if (question.error) {
+                document.getElementById('question').textContent = question.error;
+                return;
+            }
+            document.getElementById('question').textContent = question.text;
+            document.getElementById('options').innerHTML = `
+                <button onclick="submitAnswer(${question.id}, 'a')">${question.options.a}</button>
+                <button onclick="submitAnswer(${question.id}, 'b')">${question.options.b}</button>
+                <button onclick="submitAnswer(${question.id}, 'c')">${question.options.c}</button>
+                <button onclick="submitAnswer(${question.id}, 'd')">${question.options.d}</button>
+            `;
+        }
+
+        async function submitAnswer(questionId, option) {
+            const formData = new FormData();
+            formData.append('question_id', questionId);
+            formData.append('selected_option', option);
+            const res = await fetch('/api/submit/', {
+                method: 'POST',
+                body: formData
+            });
+            const result = await res.json();
+            alert(result.is_correct ? "Correct!" : "Incorrect!");
+        }
+
+        async function getResults() {
+            const res = await fetch('/api/results/');
+            const results = await res.json();
+            document.getElementById('results').textContent = `
+                Total: ${results.total}, Correct: ${results.correct}, Incorrect: ${results.incorrect}
+            `;
+        }
+    </script>
+</head>
+<body>
+    <h1>Quiz App</h1>
+    <button onclick="startSession()">Start Session</button>
+    <button onclick="fetchQuestion()">Get Question</button>
+    <button onclick="getResults()">View Results</button>
+    <p id="status"></p>
+    <p id="question"></p>
+    <div id="options"></div>
+    <p id="results"></p>
+</body>
+</html>
